@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
+using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Serialization;
@@ -80,6 +81,72 @@ namespace ADGOS
             }
             snake = tmp;
         }
+
+        
+        public void speedtest()
+        {
+            // the URL to download a file from
+            Uri URL = new Uri(
+            "http://puresourcecode.com/file.axd?file=/SpeedTest/1024kb.txt"
+            );
+            WebClient wc = new WebClient();
+
+            Console.WriteLine("Simple speedtest");
+            Console.WriteLine("----------------");
+            Console.WriteLine("Will test your download rate. " +
+                              "Press any key to begin.");
+            Console.ReadKey();
+
+            Console.WriteLine("\nDownloading file: 1024kb.txt...");
+            Console.WriteLine("From http://puresourcecode.com");
+            Console.WriteLine("Note: This file will automatically " +
+                              "be deleted after the test.");
+
+            // get current tickcount 
+            double starttime = Environment.TickCount;
+
+            // download file from the specified URL, 
+            // and save it to C:\speedtest.txt
+            // in your project change the path of the following line
+            wc.DownloadFile(URL, @"0:\\speedtest.txt");
+
+            // get current tickcount
+            double endtime = Environment.TickCount;
+
+            // how many seconds did it take?
+            // we are calculating this by subtracting starttime from
+            // endtime and dividing by 1000 (since the tickcount is in 
+            // miliseconds 1000 ms = 1 sec)
+            double secs = Math.Floor(endtime - starttime) / 1000;
+
+            // calculate download rate in kb per sec.
+            // this is done by dividing 1024 by the number of seconds it
+            // took to download the file (1024 bytes = 1 kilobyte)
+            double kbsec = Math.Round(1024 / secs);
+
+            Console.WriteLine("\nCompleted. Statistics:\n");
+
+            Console.WriteLine("1mb download: \t{0} secs", secs);
+            Console.WriteLine("Download rate: \t{0} kb/sec", kbsec);
+
+            Console.WriteLine("\nPress any key to exit...");
+            Console.Read();
+            Console.WriteLine("Deleting file...");
+            try
+            {
+                // delete downloaded file
+                System.IO.File.Delete(@"0:\\speedtest.txt");
+                Console.WriteLine("Done.");
+            }
+            catch
+            {
+                Console.WriteLine("Couldn't delete download file.");
+                Console.WriteLine("You can try to delete the file!");
+                Console.ReadKey();
+            }
+            MainMenu();
+        }
+    
 
         public void changeArray()
         {
@@ -481,7 +548,7 @@ namespace ADGOS
             Console.WriteLine("calc - opens the calculator");
             Console.WriteLine("vi - opens the text editor");
             Console.WriteLine("specs - shows the specs of the computer");
-            Console.WriteLine("tetris - opens tetris");
+            Console.WriteLine("speedtest - internet speed test");
 
         }
         void calc()
