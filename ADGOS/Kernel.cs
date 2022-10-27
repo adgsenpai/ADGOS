@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Xml.Serialization;
 using Sys = Cosmos.System;
 
@@ -9,7 +11,7 @@ namespace ADGOS
 {
     public class Kernel : Sys.Kernel
     {
-        /* SNAKE VARS */
+        
         public int[] matrix;
         public List<int[]> commands;
         public List<int[]> snake;
@@ -24,10 +26,12 @@ namespace ADGOS
         String version = "0.0.1";
         protected override void BeforeRun()
         {
-            FS = new Sys.FileSystem.CosmosVFS(); 
+            FS = new Sys.FileSystem.CosmosVFS();
             Sys.FileSystem.VFS.VFSManager.RegisterVFS(FS);
             FS.Initialize(true);
             Console.WriteLine("Welcome to ADGOS!");
+            //set current directory to 0:\
+            Directory.SetCurrentDirectory(@"0:\\");
         }
         public string getSnakeScore()
         {
@@ -291,7 +295,7 @@ namespace ADGOS
         void MainMenu()
         {
             // print current directory
-            Console.Write("ADGOS - "+  Directory.GetCurrentDirectory() + ":");
+            Console.Write("ADGOS - " + Directory.GetCurrentDirectory() + ":");
             var input = Console.ReadLine();
             if (input == "cls")
             {
@@ -324,11 +328,7 @@ namespace ADGOS
             {
                 Console.WriteLine("Date: " + DateTime.Now.ToString("dd/MM/yyyy"));
             }
-            else if (input == "calc")
-            {
-                Console.WriteLine("Opening Calculator...");
-            }
-            else if (input == "notepad")
+            else if (input == "vi")
             {
                 MIV.StartMIV();
             }
@@ -433,13 +433,31 @@ namespace ADGOS
             {
                 ls();
             }
+            else if (input == "mkdir")
+            {
+                mkdir();
+            }
             else if (input == "specs")
             {
                 specs();
             }
+            else if (input == "rmdir")
+            {
+                rmdir();
+            }
+            else if (input == "rm")
+            {
+                rm();
+            }
+            else if (input == "calc")
+            {
+                calc();
+            }
             else
             {
-                Console.WriteLine("Command not found!");
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Illegal command!");
+                Console.ForegroundColor = ConsoleColor.White;
             }
         }
 
@@ -449,6 +467,11 @@ namespace ADGOS
             Console.WriteLine("ADGOS - Commands");
             Console.WriteLine("=========================");
             Console.WriteLine("cls - clears the screen");
+            Console.WriteLine("mkdir - creates a new directory");
+            Console.WriteLine("rm - removes a file");
+            Console.WriteLine("rmdir - removes a directory");
+            Console.WriteLine("ls- shows the files in the current directory");
+            Console.WriteLine("cd - changes the current directory");
             Console.WriteLine("echo - echos the text");
             Console.WriteLine("shutdown - shuts down the computer");
             Console.WriteLine("reboot - reboots the computer");
@@ -456,21 +479,114 @@ namespace ADGOS
             Console.WriteLine("time - shows the time");
             Console.WriteLine("date - shows the date");
             Console.WriteLine("calc - opens the calculator");
-            Console.WriteLine("notepad - opens notepad");
+            Console.WriteLine("vi - opens the text editor");
             Console.WriteLine("specs - shows the specs of the computer");
-            Console.WriteLine("snake - opens snake");
             Console.WriteLine("tetris - opens tetris");
-            Console.WriteLine("ls- shows the files in the current directory");
-            Console.WriteLine("cd - changes the current directory");
+
+        }
+        void calc()
+        {
+                 
+                MainMenu();
+        }
+        void mkdir()
+        {
+            Console.Write("Directory name: ");
+            var dir = Console.ReadLine();
+            Directory.CreateDirectory(dir);
+            MainMenu();
+        }
+
+
+      
+        void rmdir()
+        {
+            Console.Write("Directory name: ");
+            var dir = Console.ReadLine();
+            try
+            {
+                if (dir.Contains(@"\"))
+                {
+                    Directory.Delete(dir);
+                }
+                else
+                {
+
+                    if (Directory.GetCurrentDirectory().Contains(@"\"))
+                    {
+                        Directory.Delete(Directory.GetCurrentDirectory().Remove(Directory.GetCurrentDirectory().Length - 1) + @"\" + dir);
+                    }
+                    else
+                    {
+                        Directory.Delete(Directory.GetCurrentDirectory() + @"\" + dir);
+                    }
+
+                }
+            }
+            catch
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Directory not found!");
+                Console.ForegroundColor = ConsoleColor.White;
+            }
+            MainMenu();
+        }
+
+
+        void rm()
+        {
+            Console.Write("File name: ");
+            var file = Console.ReadLine();
+            try
+            {
+                if (file.Contains(@"\"))
+                {
+                    File.Delete(file);
+                }
+                else
+                {
+                    if (Directory.GetCurrentDirectory().Contains(@"\"))
+                    {
+                        File.Delete(Directory.GetCurrentDirectory().Remove(Directory.GetCurrentDirectory().Length - 1) + @"\" + file);
+                    }
+                    else
+                    {
+                        File.Delete(Directory.GetCurrentDirectory() + @"\" + file);
+                    }
+                }
+            }
+            catch
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("File not found!");
+                Console.ForegroundColor = ConsoleColor.White;
+            }
+            MainMenu();
         }
 
         void ls()
         {
-            // list files in current directory
-            Console.WriteLine("Files in current directory:");
-            foreach (var file in Directory.GetFiles(@"0:\"))
+            try
             {
-                Console.WriteLine(file);
+                // list folders and files in current directory
+                var folders = Directory.GetDirectories(Directory.GetCurrentDirectory());
+                var files = Directory.GetFiles(Directory.GetCurrentDirectory());
+                foreach (var folder in folders)
+                {
+                    Console.WriteLine(@"\" + folder);
+                }
+                foreach (var file in files)
+                {
+                    Console.WriteLine(file);
+                }
+            }
+            catch (Exception)
+            {
+                // Red color
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Fatal error!");
+                Console.ForegroundColor = ConsoleColor.White;
+                MainMenu();
             }
         }
 
@@ -480,19 +596,49 @@ namespace ADGOS
             // input directory
             Console.Write("Directory: ");
             var dir = Console.ReadLine();
-    
-            //if dir exists
-            if (Directory.Exists(dir))
-            {
-                // change directory
-                Directory.SetCurrentDirectory(dir);
-            }
-            else
-            {
-                Console.WriteLine("Directory does not exist!");
-            }
-        }
 
+            try
+            {
+
+                // if dir is ..
+                if (dir == "..")
+                {
+                    if (Directory.GetCurrentDirectory() == @"0:\\")
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("You are already in the root directory!");
+                        Console.ForegroundColor = ConsoleColor.White;
+                        MainMenu();
+                    }
+                    else
+                    {
+                        Directory.SetCurrentDirectory(Directory.GetParent(Directory.GetCurrentDirectory()).FullName);
+
+                    }
+                }
+                else
+                {
+                    // if dir is \
+                    if (dir.Contains(@"\"))
+                    {
+                        // go to dir
+                        Directory.SetCurrentDirectory(dir);
+                    }
+                    else
+                    {
+                        // go to dir in current directory
+                        Directory.SetCurrentDirectory(Directory.GetCurrentDirectory() + @"\" + dir);
+                    }
+                }
+            }
+            catch
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Directory not found!");
+                Console.ForegroundColor = ConsoleColor.White;
+            }
+            MainMenu();
+        }
 
         void specs()
         {
